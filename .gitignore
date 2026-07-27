@@ -1,0 +1,19 @@
+# dependencies
+/node_modules
+
+# env (AGENTS.md §3 / ENVIRONMENT.md: .env.local must not be committed)
+.env
+.env.local
+.env*.local
+
+# next.js
+/.next/
+/out/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# misc
+.DS_Store
+*.log
