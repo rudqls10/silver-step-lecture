@@ -18,13 +18,15 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
 // 싱글톤: 호출마다 새 client를 만들면 PKCE code verifier / 세션 스토리지가
 // 공유되지 않아 무한 리다이렉트가 발생합니다.
-// flowType을 강제하지 않고 Supabase 기본값(implicit/해시 토큰)을 사용합니다.
+// detectSessionInUrl:false → 클라이언트가 URL의 ?code= 를 자동 교환하지 않음.
+// (콜백 페이지에서 exchangeCodeForSession(code) 을 단일 호출하므로 중복 교환/verifier 소모 방지)
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     // PKCE flow: Supabase redirects to /auth/callback?code=... which we exchange.
     flowType: "pkce",
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: false,
   },
 });
 
