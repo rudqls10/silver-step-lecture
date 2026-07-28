@@ -27,9 +27,11 @@ const Login: NextPage = () => {
     setError("");
     try {
       await signInWithGoogle();
-      // DUMMY 모드: signInWithGoogle 내부에서 /onboarding 이동
-    } catch {
-      setError("로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[Login] signInWithGoogle failed:", e);
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(`로그인에 실패했습니다: ${msg}`);
       setBusy(false);
     }
   };

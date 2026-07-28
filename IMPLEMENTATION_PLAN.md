@@ -67,3 +67,17 @@
 
 추가로 확인해야 할 문서나 구체적인 질문이 있으면 즉시 알려주세요. 작업을 시작하기 전에 현재 프로젝트 구조와 `package.json`을 먼저 확인하여 제시된 파일들의 존재 여부를 점검할 예정입니다.
 (사용자의 별도 지시가 있을 경우 수행합니다.)
+
+---
+
+## 환경변수
+
+이 프로젝트에는 다음 환경변수가 필요하다.
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+  - Supabase 프로젝트 주소
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  - 브라우저에서 사용하는 Supabase 공개 키
+
+실제 값은 `.env.local`과 Vercel Environment Variables에 저장한다.
+MD 파일과 GitHub에는 실제 값을 기록하지 않는다.
