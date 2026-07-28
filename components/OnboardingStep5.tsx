@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { saveOnboarding, calcBmi } from "@/lib/onboardingApi";
 import { logActivity } from "@/lib/activity";
+import { getSupabase } from "@/lib/supabaseClient";
 
 /** Step 5: 거주 형태 + 자녀 Gmail 주소 → 저장 후 메인 이동 */
 export default function OnboardingStep5({
@@ -27,6 +28,8 @@ export default function OnboardingStep5({
     try {
       const payload = { ...data, bmi: calcBmi(data.weight_kg, data.height_cm) };
       await saveOnboarding(userId, payload);
+      // 온보딩 완료 상태를 auth user_metadata에 기록 → 콜백/홈 가드와 연동
+      await getSupabase().auth.updateUser({ data: { onboarded: true } });
       await logActivity("onboarding_complete").catch(() => {});
       onDone();
     } catch {

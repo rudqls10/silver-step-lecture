@@ -18,6 +18,11 @@ const Home: NextPage = () => {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
 
+  // 온보딩 미완료 보호: 메인 접근 제한
+  useEffect(() => {
+    if (!loading && user && !user.isOnboarded) router.replace("/onboarding");
+  }, [loading, user, router]);
+
   const handleLogout = async () => {
     setBusy(true);
     try {

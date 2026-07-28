@@ -5,6 +5,7 @@ export interface SessionUser {
   email: string;
   fullName: string;
   avatarUrl?: string;
+  isOnboarded: boolean;
 }
 
 /**
@@ -32,6 +33,7 @@ export async function getSession(): Promise<SessionUser | null> {
       (u.user_metadata?.avatar_url as string) ??
       (u.user_metadata?.picture as string) ??
       undefined,
+    isOnboarded: u.user_metadata?.onboarded === true,
   };
 }
 
