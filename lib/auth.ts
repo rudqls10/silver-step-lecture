@@ -1,4 +1,4 @@
-import { getSupabase, APP_URL } from "./supabaseClient";
+import { getSupabase } from "./supabaseClient";
 
 export interface SessionUser {
   id: string;
@@ -6,6 +6,14 @@ export interface SessionUser {
   fullName: string;
   avatarUrl?: string;
   isOnboarded: boolean;
+}
+
+/** 브라우저 현재 origin 기반으로 콜백 URL 생성 (localhost/Vercel 모두 정확) */
+function getCallbackUrl(): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/auth/callback`;
+  }
+  return "/auth/callback";
 }
 
 /**
@@ -16,7 +24,7 @@ export async function signInWithGoogle(): Promise<void> {
   const supabase = getSupabase();
   await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${APP_URL}/auth/callback` },
+    options: { redirectTo: getCallbackUrl() },
   });
 }
 
