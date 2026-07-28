@@ -29,8 +29,11 @@ const AuthCallback: NextPage = () => {
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
         if (cancelled) return;
         if (exchangeError) {
-          setError("로그인 처리에 실패했습니다. 다시 시도해 주세요.");
-          setTimeout(() => router.replace("/login"), 1500);
+          // 실제 에러 메시지를 노출하여 Vercel/로컬 환경 차이 진단
+          // eslint-disable-next-line no-console
+          console.error("[AuthCallback] exchangeCodeForSession failed:", exchangeError);
+          setError(`로그인 처리에 실패했습니다: ${exchangeError.message}`);
+          setTimeout(() => router.replace("/login"), 4000);
           return;
         }
         const { data } = await supabase.auth.getSession();
