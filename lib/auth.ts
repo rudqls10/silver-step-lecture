@@ -24,7 +24,11 @@ export async function signInWithGoogle(): Promise<void> {
   const supabase = getSupabase();
   await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: getCallbackUrl() },
+    options: {
+      redirectTo: getCallbackUrl(),
+      // 매번 계정 선택 화면을 강제 표시 → 로그아웃 후 다른 계정 선택 가능
+      queryParams: { prompt: "select_account" },
+    },
   });
 }
 

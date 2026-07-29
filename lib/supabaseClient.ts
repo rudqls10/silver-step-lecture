@@ -22,11 +22,10 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 // (콜백 페이지에서 exchangeCodeForSession(code) 을 단일 호출하므로 중복 교환/verifier 소모 방지)
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // PKCE flow: Supabase redirects to /auth/callback?code=... which we exchange.
     flowType: "pkce",
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: true, // Supabase가 콜백 URL의 code를 자동 감지·교환
   },
 });
 

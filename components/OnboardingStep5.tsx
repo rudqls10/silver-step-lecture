@@ -3,6 +3,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { saveOnboarding, calcBmi } from "@/lib/onboardingApi";
 import { logActivity } from "@/lib/activity";
 import { getSupabase } from "@/lib/supabaseClient";
+import { useUser } from "@/context/UserContext";
 
 /** Step 5: 거주 형태 + 자녀 Gmail 주소 → 저장 후 메인 이동 */
 export default function OnboardingStep5({
@@ -13,6 +14,7 @@ export default function OnboardingStep5({
   onDone: () => void;
 }) {
   const { data, update, setStep } = useOnboarding();
+  const { refresh } = useUser();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,6 +33,8 @@ export default function OnboardingStep5({
       // 온보딩 완료 상태를 auth user_metadata에 기록 → 콜백/홈 가드와 연동
       await getSupabase().auth.updateUser({ data: { onboarded: true } });
       await logActivity("onboarding_complete").catch(() => {});
+      // UserContext 갱신 후 메인 이동 (index.tsx 가드의 race condition 방지)
+      await refresh();
       onDone();
     } catch {
       setError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");

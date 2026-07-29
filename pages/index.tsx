@@ -1,8 +1,10 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Head from "next/head";
 import type { NextPage } from "next";
 import { useUser } from "@/context/UserContext";
+import { getSupabase } from "@/lib/supabaseClient";
+import { getOnboarding } from "@/lib/onboardingApi";
 
 /**
  * 메인 운동 화면(/) — 이번 범위(로그인+온보딩)에서는 사용자 정보 표시 + 로그아웃만 둔다.
@@ -10,30 +12,61 @@ import { useUser } from "@/context/UserContext";
  */
 const Home: NextPage = () => {
   const router = useRouter();
-  const { user, loading, signOut } = useUser();
+  const { user, loading, signOut, refresh } = useUser();
   const [busy, setBusy] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  // 온보딩 가드: 최초 1회만 실행 (updateUser 후 세션 갱신으로 user가 교체될 때 재실행 방지)
+  const onboardingChecked = useRef(false);
 
-  // 미로그인 보호
+  // 미로그인 보호 (OAuth callback 직후 race condition 방지)
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
+    if (loading) return;
+    if (user) {
+      setAuthChecked(true);
+      return;
+    }
+
+    // UserContext에 user가 없을 때 — Supabase 세션 직접 확인
+    const supabase = getSupabase();
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        // 세션 존재 → UserContext 강제 갱신
+        refresh();
+      } else {
+        router.replace("/login");
+      }
+      setAuthChecked(true);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user, router]);
 
-  // 온보딩 미완료 보호: 메인 접근 제한
+  // 온보딩 미완료 보호: DB에서 실제 데이터 존재 여부를 항상 확인
+  // useRef로 1회만 실행하여 race condition 방지
   useEffect(() => {
-    if (!loading && user && !user.isOnboarded) router.replace("/onboarding");
-  }, [loading, user, router]);
+    if (!authChecked || !user) return;
+    // 이미 확인했으면 재실행하지 않음 (updateUser 후 user 교체 시 재실행 방지)
+    if (onboardingChecked.current) return;
+    onboardingChecked.current = true;
+
+    // DB에서 실제 온보딩 데이터 존재 여부 확인 (metadata만으로는 DB 삭제 시 오탐 가능)
+    getOnboarding(user.id).then((data) => {
+      if (!data) {
+        router.replace("/onboarding");
+      }
+    });
+  }, [authChecked, user, router]);
 
   const handleLogout = async () => {
     setBusy(true);
     try {
       await signOut();
-      router.replace("/login");
+      // router.replace는 auth useEffect가 user=null을 감지 후 자동 처리
     } catch {
       setBusy(false);
     }
   };
 
-  if (loading || !user) {
+  if (loading || !authChecked || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-lg">불러오는 중...</p>

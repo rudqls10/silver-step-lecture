@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { getSession, signOut as authSignOut, type SessionUser } from "@/lib/auth";
 import { upsertProfile } from "@/lib/profileApi";
 import { logActivity } from "@/lib/activity";
+import { getSupabase } from "@/lib/supabaseClient";
 
 interface UserCtx {
   user: SessionUser | null;
@@ -29,7 +30,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // 초기 세션 로드
     refresh();
+
+    // 세션 변경 실시간 감지 (callback 교환 완료 시 즉시 반영)
+    const supabase = getSupabase();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event) => {
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "SIGNED_OUT") {
+          const session = await getSession();
+          setUser(session);
+          setLoading(false);
+        }
+      },
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 세션 확보 시 프로필 동기화 + login 로그 (OAuth 콜백/더미 모두 동일 경로)

@@ -10,7 +10,10 @@ export async function logActivity(
 ): Promise<void> {
   const supabase = getSupabase();
   try {
+    // RLS 정책: user_id = auth.uid() 이므로 반드시 포함해야 함
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("activity_logs").insert({
+      user_id: user?.id ?? null,
       event_type,
       metadata: meta,
       status: "success",

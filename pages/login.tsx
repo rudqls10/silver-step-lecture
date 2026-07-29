@@ -31,6 +31,18 @@ const Login: NextPage = () => {
       // eslint-disable-next-line no-console
       console.error("[Login] signInWithGoogle failed:", e);
       const msg = e instanceof Error ? e.message : String(e);
+
+      // flow state 에러 등의 경우 이미 세션이 존재할 수 있음 — 세션 확인 후 정상 분기
+      if (msg.includes("flow state") || msg.includes("flow_state")) {
+        const { getSupabase } = await import("@/lib/supabaseClient");
+        const { data } = await getSupabase().auth.getSession();
+        if (data.session?.user) {
+          const onboardingData = await getOnboarding(data.session.user.id);
+          router.replace(onboardingData ? "/" : "/onboarding");
+          return;
+        }
+      }
+
       setError(`로그인에 실패했습니다: ${msg}`);
       setBusy(false);
     }
