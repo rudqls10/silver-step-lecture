@@ -20,7 +20,7 @@ create table public.profiles (
 -- 2) senior_health_profiles (온보딩 건강 정보)
 create table if not exists public.senior_health_profiles (
   id                     uuid primary key default gen_random_uuid(),
-  user_id                uuid not null references auth.users(id) on delete cascade,
+  user_id                uuid not null unique references auth.users(id) on delete cascade,
   senior_name            text,
   guardian_name          text,
   gender                 text,

@@ -19,19 +19,54 @@ export interface OnboardingData {
 
 export async function saveOnboarding(userId: string, data: OnboardingData): Promise<void> {
   const supabase = getSupabase();
-  await supabase.from("senior_health_profiles").upsert({
+
+  // 기존 프로필 존재 여부 확인 (onConflict UNIQUE 제약조건 오류 방지)
+  const { data: existing } = await supabase
+    .from("senior_health_profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const payload = {
     user_id: userId,
     ...data,
-  });
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existing) {
+    // 기존 데이터 존재 시 update
+    const { error } = await supabase
+      .from("senior_health_profiles")
+      .update(payload)
+      .eq("user_id", userId);
+    if (error) {
+      console.error("[saveOnboarding] Update Error:", error);
+      throw error;
+    }
+  } else {
+    // 신규 사용자 시 insert
+    const { error } = await supabase
+      .from("senior_health_profiles")
+      .insert(payload);
+    if (error) {
+      console.error("[saveOnboarding] Insert Error:", error);
+      throw error;
+    }
+  }
 }
 
 export async function getOnboarding(userId: string): Promise<OnboardingData | null> {
   const supabase = getSupabase();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("senior_health_profiles")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.warn("[getOnboarding] fetch error:", error);
+  }
   return (data as OnboardingData) ?? null;
 }
 

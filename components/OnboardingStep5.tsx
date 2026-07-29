@@ -36,8 +36,10 @@ export default function OnboardingStep5({
       // UserContext 갱신 후 메인 이동 (index.tsx 가드의 race condition 방지)
       await refresh();
       onDone();
-    } catch {
-      setError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } catch (err: unknown) {
+      console.error("[Step5] saveOnboarding failed:", err);
+      const msg = err instanceof Error ? err.message : (typeof err === "object" && err && "message" in err ? String((err as { message: unknown }).message) : String(err));
+      setError(`저장에 실패했습니다: ${msg}`);
       setSaving(false);
     }
   };
