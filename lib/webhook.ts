@@ -33,7 +33,7 @@ export class WebhookManager {
   webhookUrl: string = '';
   seniorName: string = '어르신';
   childName: string = '자녀';
-  targetCount: number = 10;
+  targetCount: number = 3;
   autoNotify: boolean = false;
   autoStart: boolean = false;
 
@@ -47,7 +47,7 @@ export class WebhookManager {
     this.webhookUrl = localStorage.getItem(this.STORAGE_KEYS.WEBHOOK_URL) || '';
     this.seniorName = localStorage.getItem(this.STORAGE_KEYS.SENIOR_NAME) || '어르신';
     this.childName = localStorage.getItem(this.STORAGE_KEYS.CHILD_NAME) || '자녀';
-    this.targetCount = parseInt(localStorage.getItem(this.STORAGE_KEYS.TARGET_COUNT) || '10', 10);
+    this.targetCount = parseInt(localStorage.getItem(this.STORAGE_KEYS.TARGET_COUNT) || '3', 10);
     this.autoNotify = localStorage.getItem(this.STORAGE_KEYS.AUTO_NOTIFY) === 'true';
     this.autoStart = localStorage.getItem(this.STORAGE_KEYS.AUTO_START) === 'true';
   }

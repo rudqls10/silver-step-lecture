@@ -25,7 +25,7 @@ export const WorkoutMain: React.FC<WorkoutMainProps> = ({ user, onLogout }) => {
   const [exerciseType, setExerciseType] = useState<string>(ExerciseType.MANSE);
   const [countdownNumber, setCountdownNumber] = useState<number>(3);
   const [count, setCount] = useState<number>(0);
-  const [targetCount, setTargetCount] = useState<number>(10);
+  const [targetCount, setTargetCount] = useState<number>(3);
   const [statusText, setStatusText] = useState<string>('대기 중');
   const [isDetecting, setIsDetecting] = useState<boolean>(false);
   const [timerText, setTimerText] = useState<string>('00:00');
@@ -95,7 +95,7 @@ export const WorkoutMain: React.FC<WorkoutMainProps> = ({ user, onLogout }) => {
 
   const startActualWorkout = () => {
     const settings = webhookRef.current?.getSettings();
-    const activeTarget = settings?.targetCount || 10;
+    const activeTarget = settings?.targetCount || 3;
     setTargetCount(activeTarget);
     setCount(0);
     setScreenState('WORKOUT');
@@ -193,17 +193,23 @@ export const WorkoutMain: React.FC<WorkoutMainProps> = ({ user, onLogout }) => {
   }, []);
 
   const handleSendNotify = async (): Promise<{ success: boolean; message: string }> => {
-    const config = getExerciseConfig(exerciseType);
-    if (webhookRef.current) {
-      const res = await webhookRef.current.sendExerciseComplete({
-        exerciseName: config.name,
-        exerciseIcon: config.icon,
-        totalReps: count,
-        durationSeconds: workoutDuration,
-      });
-      return { success: res.success, message: res.message };
+    try {
+      const { sendGuardianReport } = await import('@/lib/emailApi');
+      const res = await sendGuardianReport(user.id);
+
+      if (res.success) {
+        if (audioRef.current) {
+          audioRef.current.speakMessage('NOTIFY_SENT');
+        }
+        logActivity('EMAIL_SENT_SUCCESS', { userId: user.id });
+        return { success: true, message: '자녀(보호자)에게 알림 리포트를 발송했습니다!' };
+      } else {
+        logActivity('EMAIL_SENT_FAILED', { userId: user.id, errorCode: res.errorCode });
+        return { success: false, message: `발송 실패: ${res.error || res.errorCode}` };
+      }
+    } catch (err: any) {
+      return { success: false, message: '알림 발송 중 오류가 발생했습니다.' };
     }
-    return { success: false, message: '웹훅 모듈 미로드' };
   };
 
   const handleSOSStop = () => {

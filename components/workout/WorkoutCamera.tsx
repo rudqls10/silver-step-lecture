@@ -206,6 +206,11 @@ export const WorkoutCamera: React.FC<WorkoutCameraProps> = ({
 
     return () => {
       if (timerId) clearTimeout(timerId);
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((track) => track.stop());
+        videoRef.current.srcObject = null;
+      }
       if (cameraInstance) {
         try {
           cameraInstance.stop();

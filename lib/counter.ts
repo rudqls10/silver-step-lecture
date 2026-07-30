@@ -27,7 +27,7 @@ export class ExerciseCounter {
   onCountBeep: () => void;
 
   constructor(options: ExerciseCounterOptions = {}) {
-    this.targetCount = options.targetCount || 10;
+    this.targetCount = options.targetCount || 3;
     this.count = 0;
     this.lastState = null;
     this.milestones = options.milestones || [5];
