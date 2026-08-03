@@ -12,7 +12,20 @@ export interface SendReportResponse {
   error?: string;
 }
 
-export async function sendGuardianReport(userId: string, exerciseLogId?: string): Promise<SendReportResponse> {
+/** 운동 측정 데이터 — 서버로 함께 전달하여 LLM 분석에 활용 */
+export interface WorkoutStats {
+  totalReps: number;       // 총 운동 횟수
+  durationSeconds: number; // 소요 시간 (초)
+  swayScore: number;       // 신체 흔들림 수치 (cm, 작을수록 안정적)
+  balanceScore: number;    // 균형도 점수 (0~100, 높을수록 양호)
+  exerciseName: string;    // 운동 종목명
+}
+
+export async function sendGuardianReport(
+  userId: string,
+  stats: WorkoutStats,
+  exerciseLogId?: string
+): Promise<SendReportResponse> {
   try {
     const supabase = getSupabase();
     const { data: sessionData } = await supabase.auth.getSession();
@@ -31,6 +44,7 @@ export async function sendGuardianReport(userId: string, exerciseLogId?: string)
       body: JSON.stringify({
         userId,
         exerciseLogId,
+        stats,
       }),
     });
 
@@ -54,3 +68,4 @@ export async function sendGuardianReport(userId: string, exerciseLogId?: string)
     };
   }
 }
+

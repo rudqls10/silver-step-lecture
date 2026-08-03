@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import type { WorkoutStats } from '@/lib/emailApi';
 import { WorkoutCamera } from './WorkoutCamera';
 import { StartScreen } from './StartScreen';
 import { ExerciseUIOverlay } from './ExerciseUIOverlay';
@@ -192,10 +193,42 @@ export const WorkoutMain: React.FC<WorkoutMainProps> = ({ user, onLogout }) => {
     setScreenState('ERROR');
   }, []);
 
+  /**
+   * [B방식] 운동 시간·횟수를 바탕으로 자연스러운 데모 측정값을 산출합니다.
+   * - swayScore(흔들림, cm): 운동 시간이 길수록, 횟수가 많을수록 안정적으로 낮아지는 경향 반영
+   * - balanceScore(균형도, 점수): 목표 달성률이 높을수록 높은 점수 반영
+   */
+  const calcWorkoutStats = (reps: number, durationSec: number): WorkoutStats => {
+    const config = getExerciseConfig(exerciseType);
+    const completionRate = Math.min(reps / targetCount, 1); // 0~1
+
+    // 흔들림: 기본 5cm에서 목표달성률에 따라 1~5cm 사이로 낮아짐 (소수점 1자리)
+    const baseSwayMax = 5.0;
+    const baseSwayMin = 1.2;
+    const swayRaw = baseSwayMax - completionRate * (baseSwayMax - baseSwayMin);
+    // 약간의 자연스러운 미세 변동 추가 (±0.3cm)
+    const swayScore = Math.round((swayRaw + (Math.random() * 0.6 - 0.3)) * 10) / 10;
+
+    // 균형도: 기본 70점에서 목표달성률에 따라 최대 98점까지 상승
+    const baseBalance = 70;
+    const balanceRaw = baseBalance + completionRate * 28;
+    // 약간의 자연스러운 미세 변동 추가 (±3점)
+    const balanceScore = Math.min(100, Math.round(balanceRaw + (Math.random() * 6 - 3)));
+
+    return {
+      totalReps: reps,
+      durationSeconds: durationSec,
+      swayScore,
+      balanceScore,
+      exerciseName: config.name,
+    };
+  };
+
   const handleSendNotify = async (): Promise<{ success: boolean; message: string }> => {
     try {
       const { sendGuardianReport } = await import('@/lib/emailApi');
-      const res = await sendGuardianReport(user.id);
+      const stats = calcWorkoutStats(count, workoutDuration);
+      const res = await sendGuardianReport(user.id, stats);
 
       if (res.success) {
         if (audioRef.current) {
