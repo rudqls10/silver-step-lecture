@@ -7,10 +7,19 @@ import type { SessionUser } from "./auth";
  */
 export async function upsertProfile(user: SessionUser): Promise<void> {
   const supabase = getSupabase();
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const roleToSet = existing?.role ?? "user";
+
   await supabase.from("profiles").upsert({
     id: user.id,
     email: user.email,
     full_name: user.fullName,
-    role: "user",
+    role: roleToSet,
+    last_login_at: new Date().toISOString(),
   });
 }
